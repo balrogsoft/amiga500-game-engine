@@ -1,0 +1,5 @@
+*.h linguist-generated=true
+*.o linguist-generated=false
+*.info linguist-generated=false
+*.s linguist-generated=false
+*.asm linguist-generated=false
