@@ -297,7 +297,7 @@ void sp_backupSpriteBack(Sprite* spr, struct RastPort* rp, WORD x, WORD y, UBYTE
     spr->py[frame] = y;
      
     scr_offset = ( (spr->px[frame] >> 3) & 0xFFFE ) + ( spr->py[frame] * BITMAPLINEBYTES );
-    map_offset = ( frame * spr->height * 4);
+    map_offset = ( (frame * spr->height) << 2);
     
     HardWaitBlitter();
 
@@ -340,7 +340,7 @@ void sp_restoreSpriteBack(Sprite* spr, struct RastPort* rp,  WORD x, WORD y, UBY
     ULONG scr_offset, map_offset;
     
     scr_offset = ( (spr->px[frame] >> 3) & 0xFFFE ) + ( spr->py[frame] * BITMAPLINEBYTES );
-    map_offset = ( frame * spr->height * 4);
+    map_offset = ( (frame * spr->height) << 2);
     
     HardWaitBlitter();
 
