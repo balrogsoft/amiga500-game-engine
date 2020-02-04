@@ -2,6 +2,7 @@
  *					      *
  *		A500GE v 0.1		      *
  *	    Amiga 500 Game Engine             *
+ *	     Copyright 2011-2018 	      *
  *	by Pedro Gil Guirado - Balrog Soft    *
  *	      www.amigaskool.net	      *
  *					      *
@@ -122,14 +123,14 @@ typedef struct {
 
 static LONG __interrupt __saveds NullInputHandler(void)
 {
-	return 0;
+    return 0;
 }
 
 void HardWaitBlitter(void)
 {
-	while (custom->dmaconr & DMAF_BLTDONE)
-	{
-	}
+    while (custom->dmaconr & DMAF_BLTDONE)
+    {
+    }
 }
 
 Bitmap* bm_create(WORD w, WORD h, WORD d, UBYTE* data)
@@ -173,31 +174,31 @@ Bitmap* bm_create(WORD w, WORD h, WORD d, UBYTE* data)
 }
 
 void bm_dealloc(Bitmap* bm) {
-    	WaitBlit();
+    WaitBlit();
 		
-		if (bm->bitmap) {
-			if (bm->rasterOwn)
-			{
-				BYTE d;
-				for (d = 0; d < bm->depth; d++)
-					FreeRaster(bm->bitmap->Planes[d], bm->width, bm->height);
-				
-				FreeMem(bm->bitmap,sizeof(struct BitMap));
-			}
-			else
-				FreeBitMap(bm->bitmap);
-		}
+    if (bm->bitmap) {
+        if (bm->rasterOwn)
+        {
+            BYTE d;
+            for (d = 0; d < bm->depth; d++)
+                FreeRaster(bm->bitmap->Planes[d], bm->width, bm->height);
+            
+            FreeMem(bm->bitmap,sizeof(struct BitMap));
+        }
+        else
+            FreeBitMap(bm->bitmap);
+    }
+            
+    if (bm->mask)
+        FreeMem(bm->mask, bm->width*bm->height);
 		
-		if (bm->mask)
-            FreeMem(bm->mask, bm->width*bm->height);
-		
-		if (bm->colortable)
-			FreeMem(bm->colortable, sizeof(UWORD)*(2<<bm->depth));
-		
-		if (bm->rastPort)
-	 		FreeMem(bm->rastPort, sizeof(struct RastPort));
-                
-        FreeMem(bm, sizeof(Bitmap));
+    if (bm->colortable)
+        FreeMem(bm->colortable, sizeof(UWORD)*(2<<bm->depth));
+    
+    if (bm->rastPort)
+        FreeMem(bm->rastPort, sizeof(struct RastPort));
+            
+    FreeMem(bm, sizeof(Bitmap));
 }
 
 void bm_drawBlock(Bitmap* bm, struct RastPort* rp, WORD x, WORD y, WORD tile)
@@ -254,49 +255,49 @@ void bm_drawBlock(Bitmap* bm, struct RastPort* rp, WORD x, WORD y, WORD tile)
 
 void bm_createMask(Bitmap* bm, UBYTE color) 
 {
-	WORD x, y, pen, bit = 0, byte, bit_pos;
-	
-	if (!bm->mask)
-		bm->mask = (UBYTE*)AllocMem(bm->width*bm->height, MEMF_CLEAR|MEMF_CHIP);
+    WORD x, y, pen, bit = 0, byte, bit_pos;
     
+    if (!bm->mask)
+        bm->mask = (UBYTE*)AllocMem(bm->width*bm->height, MEMF_CLEAR|MEMF_CHIP);
+
     for (y = 0; y < bm->height; y++) 
-	{
-		for (x = 0; x < bm->width; x++)
-		{
-			pen = ReadPixel(bm->rastPort, x, y);
-			if (pen != color)
-			{
-				byte = bit / 8;
-				bit_pos = bit & 7;
-				
-				bm->mask[byte] ^= 1<<(7-bit_pos);
-			}
-					
-			bit++;
-		}
-		bit += 15-((bit-1)&15);
-	}
+    {
+        for (x = 0; x < bm->width; x++)
+        {
+            pen = ReadPixel(bm->rastPort, x, y);
+            if (pen != color)
+            {
+                byte = bit / 8;
+                bit_pos = bit & 7;
+                
+                bm->mask[byte] ^= 1<<(7-bit_pos);
+            }
+                            
+            bit++;
+        }
+        bit += 15-((bit-1)&15);
+    }
 }
 
 Sprite* sp_create(Bitmap* bm, WORD width, WORD height, BOOL mask) 
 {
-	Sprite* spr = (Sprite*)AllocMem(sizeof(Sprite), 0L);
+    Sprite* spr = (Sprite*)AllocMem(sizeof(Sprite), 0L);
 	
-	spr->bm = bm;
-	spr->rest_bm = NULL;
+    spr->bm = bm;
+    spr->rest_bm = NULL;
 	
     if (mask)
         bm_createMask(spr->bm, 0);
-	
-	spr->px[0] = spr->px[1] = 0;
-	spr->py[0] = spr->py[1] = 0;
-	
-	spr->width = width;
+    
+    spr->px[0] = spr->px[1] = 0;
+    spr->py[0] = spr->py[1] = 0;
+    
+    spr->width = width;
     spr->height = height;
-        
-	spr->rest_bm = bm_create(spr->width+16, spr->height<<1, bm->depth, NULL);
+    
+    spr->rest_bm = bm_create(spr->width+16, spr->height<<1, bm->depth, NULL);
 
-	return spr;
+    return spr;
 }
 
 void sp_backupSpriteBack(Sprite* spr, struct RastPort* rp, WORD x, WORD y, UBYTE frame) {
@@ -380,7 +381,6 @@ void sp_restoreSpriteBack(Sprite* spr, struct RastPort* rp,  WORD x, WORD y, UBY
     custom->bltapt	= spr->rest_bm->bitmap->Planes[2] + map_offset;
     custom->bltdpt	=  rp->BitMap->Planes[2] + scr_offset;
 
-
     custom->bltsize = 1026;//16*64+2;
 
     HardWaitBlitter();
@@ -390,8 +390,6 @@ void sp_restoreSpriteBack(Sprite* spr, struct RastPort* rp,  WORD x, WORD y, UBY
 
 
     custom->bltsize = 1026;//16*64+2;
-    
-    
 }
 
 void sp_drawSprite(Sprite* spr, struct RastPort* rp, WORD sx, WORD sy, UBYTE frame) 
@@ -449,42 +447,42 @@ void sp_drawSprite(Sprite* spr, struct RastPort* rp, WORD sx, WORD sy, UBYTE fra
  
 void sp_dealloc(Sprite* spr) 
 {
-	if (spr)
-	{
-		if (spr->rest_bm)
-			bm_dealloc(spr->rest_bm);
-        
-		FreeMem(spr,sizeof(Sprite));
-	}
+    if (spr)
+    {
+        if (spr->rest_bm)
+            bm_dealloc(spr->rest_bm);
+
+        FreeMem(spr,sizeof(Sprite));
+    }
 }
 
 
 UBYTE joy_read(UWORD joynum)
 {
-        UBYTE ret = 0;
-        UWORD joy;
+    UBYTE ret = 0;
+    UWORD joy;
 
-        if(joynum == 0) 
-                joy = custom->joy0dat;
-        else
-                joy = custom->joy1dat;
+    if(joynum == 0) 
+        joy = custom->joy0dat;
+    else
+        joy = custom->joy1dat;
 
-        ret += (joy >> 1 ^ joy) & 0x0100 ? UP : 0;  
-        ret += (joy >> 1 ^ joy) & 0x0001 ? DOWN : 0;
+    ret += (joy >> 1 ^ joy) & 0x0100 ? UP : 0;  
+    ret += (joy >> 1 ^ joy) & 0x0001 ? DOWN : 0;
 
-        ret += joy & 0x0200 ? LEFT : 0;
-        ret += joy & 0x0002 ? RIGHT : 0;
-    
-        if(joynum == 0) {
-            ret += !(cia->ciapra & 0x0040) ? FIRE1 : 0; 
-            ret += !(POTGOR & 0x0400) ? FIRE2 : 0;
-        }
-        else {
-            ret += !(cia->ciapra & 0x0080) ? FIRE1 : 0;
-            ret += !(POTGOR & 0x4000) ? FIRE2 : 0;
-        }
+    ret += joy & 0x0200 ? LEFT : 0;
+    ret += joy & 0x0002 ? RIGHT : 0;
 
-        return(ret);
+    if(joynum == 0) {
+        ret += !(cia->ciapra & 0x0040) ? FIRE1 : 0; 
+        ret += !(POTGOR & 0x0400) ? FIRE2 : 0;
+    }
+    else {
+        ret += !(cia->ciapra & 0x0080) ? FIRE1 : 0;
+        ret += !(POTGOR & 0x4000) ? FIRE2 : 0;
+    }
+
+    return(ret);
 }
 
 void startTimer(void) {
@@ -996,10 +994,10 @@ int main(void)
     // Remove null input handler
     if (InputMP && InputReq)
     {
-            InputReq->io_Data = &InputHandler;
-            InputReq->io_Command = IND_REMHANDLER;
-            DoIO((struct IORequest *)InputReq);
-            CloseDevice((struct IORequest *)InputReq);
+        InputReq->io_Data = &InputHandler;
+        InputReq->io_Command = IND_REMHANDLER;
+        DoIO((struct IORequest *)InputReq);
+        CloseDevice((struct IORequest *)InputReq);
     }
 
     if (InputReq) FreeMem(InputReq,sizeof(struct IORequest));
