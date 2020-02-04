@@ -91,7 +91,7 @@ typedef struct {
 	UBYTE colors;
 	BOOL rasterOwn;
 	USHORT *colortable;
-    UBYTE wbytes;
+        UBYTE wbytes;
 	struct BitMap *bitmap;
 	struct RastPort *rastPort;
 } Bitmap;
@@ -105,8 +105,8 @@ typedef struct {
 	
 	WORD x;
 	WORD y;
-    WORD width;
-    WORD height;
+        WORD width;
+        WORD height;
     
 } Sprite;
 
@@ -132,7 +132,7 @@ Bitmap* bm_create(WORD w, WORD h, WORD d, UBYTE* data)
 	bm->height = h;
 	bm->depth  = d;
 
-    bm->wbytes = w >> 3;
+        bm->wbytes = w >> 3;
     
 	bm->mask = NULL;
 	bm->colortable = (UWORD*) AllocMem(sizeof(UWORD)*(2<<d), MEMF_CLEAR);
@@ -145,7 +145,7 @@ Bitmap* bm_create(WORD w, WORD h, WORD d, UBYTE* data)
             InitBitMap(bm->bitmap, d, w, h);
             
             for (i = 0; i < d; i++) 
-                    bm->bitmap->Planes[i] = (PLANEPTR) AllocRaster(w,h);
+                bm->bitmap->Planes[i] = (PLANEPTR) AllocRaster(w,h);
 	    
             bm->rastPort = (struct RastPort*) AllocMem(sizeof(struct RastPort),MEMF_CLEAR);
             InitRastPort(bm->rastPort);
@@ -552,19 +552,23 @@ int main(void)
     UBYTE joyData;
     BOOL move = FALSE;
     
-	UWORD oldDMA;
+    UWORD oldDMA;
+    
+    // Open libraries need for the game engine
     
     IntuitionBase = (struct IntuitionBase *) OpenLibrary("intuition.library", 0L);
     GfxBase = (struct GfxBase *) OpenLibrary( "graphics.library", 0L);
           
+    // Save pointers for view, task and windowptr
     oldview = GfxBase->ActiView;
-    
     myTask = FindTask(NULL);
     
-	old_processwinptr = thisprocess->pr_WindowPtr;
-	thisprocess->pr_WindowPtr = (APTR)-1;
+    old_processwinptr = thisprocess->pr_WindowPtr;
+    thisprocess->pr_WindowPtr = (APTR)-1;
     thisprocess = (struct Process *) myTask;
    
+    
+    // Create a NULL input handler to disable other process capturing the keyboard 
     if ((InputMP = CreatePort("inputgamehandler",127))) {
         if ((InputReq = AllocMem(sizeof(struct IORequest),MEMF_PUBLIC|MEMF_CLEAR))) {
             InputReq->io_Message.mn_Node.ln_Type = NT_MESSAGE;
@@ -586,7 +590,7 @@ int main(void)
         }
     }
     
-    
+    // Load game assets
     if (file_ptr = Open("data/intro1.mod", MODE_OLDFILE)) 
     {
             Read(file_ptr, mod, MOD_SIZE);
@@ -618,14 +622,16 @@ int main(void)
             Close(file_ptr);
     }
     
-
+    // Remove current view
     LoadView(NULL);
     WaitTOF();
     WaitTOF();
     
+    // Initialize two view that will act as double buffer
     InitView(&view1); 
     InitView(&view2); 
 
+    // Initalize views bitmap
     InitBitMap(&bitMap1, DEPTH, WIDTH, HEIGHT);
     for (d=0; d<DEPTH; d++)
         bitMap1.Planes[d] = (PLANEPTR)AllocRaster(WIDTH, HEIGHT);
@@ -634,6 +640,7 @@ int main(void)
     for (d=0; d<DEPTH; d++)
         bitMap2.Planes[d] = (PLANEPTR)AllocRaster(WIDTH, HEIGHT);
     
+    // And the rastport associated to each bitmap
     InitRastPort(&rastPort1);
     rastPort1.BitMap = &bitMap1;
     SetRast(&rastPort1, 0);
@@ -647,6 +654,8 @@ int main(void)
     rasInfo.RyOffset = 0;
     rasInfo.Next = NULL;
 
+    // Initialize the viewport for our two views
+    // and create the copper list for each view
     InitVPort(&viewPort);
     view1.ViewPort = &viewPort;
     viewPort.RasInfo = &rasInfo;
@@ -665,6 +674,7 @@ int main(void)
     MrgCop(&view2);
     LoadRGB4(&viewPort, pal, 16);
 
+    // Create bitmap and sprite objects
     tiles_bm = bm_create(208, 112, 4, tiles);
     bm_createMask(tiles_bm, 0);
     
@@ -673,14 +683,17 @@ int main(void)
     
     obj_spr = sp_create(tiles_bm, TILE, TILE, FALSE);
         
+    // Set task priority higher, forbid and disable multitasking and interrupts
     oldPri = SetTaskPri(myTask, 127);	
     oldDMA = custom->dmacon;
 
     Forbid();
     Disable();
     
-	custom->dmacon = DMAF_SETCLR | DMAF_MASTER | DMAF_RASTER | DMAF_BLITTER | DMAF_BLITHOG;
+    // Setup dma bits
+    custom->dmacon = DMAF_SETCLR | DMAF_MASTER | DMAF_RASTER | DMAF_BLITTER | DMAF_BLITHOG;
 
+    // First drawing of the tilemap on each buffer
     rastPort = &rastPort1;
     LoadView(&view2);
     
@@ -710,15 +723,18 @@ int main(void)
         offsety_tiles[j+1] = ((j<<TILE_BITS)/208)<<TILE_BITS;
     }
     
+    // Initialize ptplayer code and play the mod
     mt_install_cia(custom, 0, 1);
     mt_init(custom, mod, NULL, 0);
     mt_musicmask(custom, 0xf);
     mt_Enable = 1;
     i = 0; 
     
+    // Initialize the timer
     startTimer();
     while((*(UBYTE *)0xBFE001) & 0x40)
     {  
+        // Handle game logic, moving player, objects, collision, repaint tiles...
         if (move == FALSE) {
             if (dx!=0 || dy!=0) {
 
@@ -837,6 +853,7 @@ int main(void)
             }
         }
         
+        // Setup rastPort to point buffer rastport
         if (frame==0) {
             rastPort = &rastPort1;
         }
@@ -844,6 +861,7 @@ int main(void)
             rastPort = &rastPort2;
         }
     
+        // Read joystick
         joyData = joy_read(1);
 
         if (move == FALSE) {
@@ -869,23 +887,27 @@ int main(void)
             }
         }
         
+        // Wait to end of frame to draw game content
         WaitTOF();
         
+        // Restore sprite and object backgrounds
         sp_restoreSpriteBack(obj_spr, rastPort, ox, oy, frame);
         sp_restoreSpriteBack(player_spr, rastPort,  px, py, frame);
 
-                
+        // Save a copy of the background where the sprites will be drawed
         sp_backupSpriteBack(obj_spr, rastPort, ox, oy, frame);
         sp_backupSpriteBack(player_spr, rastPort, px, py, frame);
 
+        // Draw the sprites
         sp_drawSprite(obj_spr, rastPort,  144, 96, frame);
-        
         sp_drawSprite(player_spr, rastPort, (dx!=0||dy!=0?spr_frames[(fps>>2)%4]:0)<<TILE_BITS, spr_anim[spr_dir], frame);
 
+        // Draw tiles which need to be repainted
         for (j = 0; j < i; j++) {
             bm_drawBlock(tiles_bm, rastPort, repaint_tilesx[j], repaint_tilesy[j], repaint_tiles[j]);
         }
         
+        // Calculate FPS
         mtimer+=timer();
         if (mtimer>=1000)
         {
@@ -900,41 +922,45 @@ int main(void)
         Move(rastPort, 10, 10);
         Text(rastPort, numstr, strlen(numstr));
         
+        // Show the current view of double buffer
         LoadView(frame==0?&view1:&view2);
+        
         frame ^= 1;
-
         fps++;
-          
     }; 
     
     WaitTOF();
     
-    
+    // Close the timer
     closeTimer();
     
+    // Close ptplayer code
     mt_end(custom);
     mt_remove_cia(custom);
     
-	custom->dmacon = oldDMA | DMAF_SETCLR | DMAF_MASTER;
+    // Set original dma bits
+    custom->dmacon = oldDMA | DMAF_SETCLR | DMAF_MASTER;
 
-    
+    // Enable and permit multitasking and interupts
     Enable();
     Permit();
    
-	thisprocess->pr_WindowPtr = old_processwinptr;
+    thisprocess->pr_WindowPtr = old_processwinptr;
 
-    
+    // Load original view
     LoadView(oldview);
     WaitTOF();
     
-	FreeCprList(view1.LOFCprList);
+    // Free copper lists created by the viewport
+    FreeCprList(view1.LOFCprList);
     if(view1.SHFCprList)
         FreeCprList(view1.SHFCprList);
-	FreeCprList(view2.LOFCprList);
+    FreeCprList(view2.LOFCprList);
     if(view2.SHFCprList)
         FreeCprList(view2.SHFCprList);
     FreeVPortCopLists(&viewPort); 
 
+    // Free the screen bitmap planes
     for(d=0; d<DEPTH; d++)
     {
         if (bitMap1.Planes[d])
@@ -943,31 +969,34 @@ int main(void)
             FreeRaster(bitMap2.Planes[d], WIDTH, HEIGHT);
     }
     
+    // Free sprites and bitmaps objects
     sp_dealloc(player_spr);
     sp_dealloc(obj_spr);
     
     bm_dealloc(player_bm);
     bm_dealloc(tiles_bm);
         
+    // Free memory for the game assets
     FreeMem(mod, MOD_SIZE);
     FreeMem(tiles, TILES_SIZE);
     FreeMem(player, PLAYER_SIZE);
     
     FreeMem(map, MAP_SIZE);
     FreeMem(pal, 32);
- 
-	if (InputMP && InputReq)
-	{
-		InputReq->io_Data = &InputHandler;
-		InputReq->io_Command = IND_REMHANDLER;
-		DoIO((struct IORequest *)InputReq);
-		CloseDevice((struct IORequest *)InputReq);
-	}
 
-	if (InputReq) FreeMem(InputReq,sizeof(struct IORequest));
-	if (InputMP) DeletePort(InputMP);
+    // Remove null input handler
+    if (InputMP && InputReq)
+    {
+            InputReq->io_Data = &InputHandler;
+            InputReq->io_Command = IND_REMHANDLER;
+            DoIO((struct IORequest *)InputReq);
+            CloseDevice((struct IORequest *)InputReq);
+    }
 
+    if (InputReq) FreeMem(InputReq,sizeof(struct IORequest));
+    if (InputMP) DeletePort(InputMP);
 
+    // Close libraries
     if(GfxBase)
         CloseLibrary((struct Library *)GfxBase);
     
