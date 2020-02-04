@@ -491,7 +491,7 @@ void startTimer(void) {
     TimerIO->tr_node.io_Message.mn_Node.ln_Type = NT_MESSAGE;
     TimerIO->tr_node.io_Message.mn_Length = sizeof(struct Message);
     TimerIO->tr_node.io_Message.mn_ReplyPort = TimerMP;
-    OpenDevice(TIMERNAME,UNIT_VBLANK,(struct IORequest *)TimerIO, MEMF_CLEAR);
+    OpenDevice(TIMERNAME,UNIT_VBLANK,(struct IORequest *)TimerIO, 0L);
     TimerBase = TimerIO->tr_node.io_Device;
 }
 
