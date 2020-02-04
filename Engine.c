@@ -1,3 +1,12 @@
+/**********************************************
+ *					      *
+ *		A500GE v 0.1		      *
+ *	    Amiga 500 Game Engine             *
+ *	by Pedro Gil Guirado - Balrog Soft    *
+ *	      www.amigaskool.net	      *
+ *					      *
+ **********************************************/
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
