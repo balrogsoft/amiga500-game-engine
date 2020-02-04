@@ -575,25 +575,25 @@ int main(void)
     thisprocess = (struct Process *) myTask;
    
     
-    // Create a NULL input handler to disable other process capturing the keyboard 
+    // Create a NULL input handler to prevent other process capturing the keyboard events 
     if ((InputMP = CreatePort("inputgamehandler",127))) {
         if ((InputReq = AllocMem(sizeof(struct IORequest),MEMF_PUBLIC|MEMF_CLEAR))) {
             InputReq->io_Message.mn_Node.ln_Type = NT_MESSAGE;
             InputReq->io_Message.mn_Length = sizeof(struct Message);
             InputReq->io_Message.mn_ReplyPort = InputMP;
-			if (OpenDevice("input.device",0,(struct IORequest *)InputReq,0) == 0)
-			{
-				InputHandler.is_Node.ln_Type = NT_INTERRUPT;
-				InputHandler.is_Node.ln_Pri = 127;
-				InputHandler.is_Data = 0;
-				InputHandler.is_Code = (APTR)NullInputHandler;
+            if (OpenDevice("input.device",0,(struct IORequest *)InputReq,0) == 0)
+            {
+                InputHandler.is_Node.ln_Type = NT_INTERRUPT;
+                InputHandler.is_Node.ln_Pri = 127;
+                InputHandler.is_Data = 0;
+                InputHandler.is_Code = (APTR)NullInputHandler;
                 InputHandler.is_Node.ln_Name=NameString;
-			
-				InputReq->io_Command = IND_ADDHANDLER;
-				InputReq->io_Data = &InputHandler;
-				
-				DoIO((struct IORequest *)InputReq);
-			}
+        
+                InputReq->io_Command = IND_ADDHANDLER;
+                InputReq->io_Data = &InputHandler;
+                
+                DoIO((struct IORequest *)InputReq);
+            }
         }
     }
     
@@ -638,7 +638,7 @@ int main(void)
     InitView(&view1); 
     InitView(&view2); 
 
-    // Initalize views bitmap
+    // Initialize bitmap views 
     InitBitMap(&bitMap1, DEPTH, WIDTH, HEIGHT);
     for (d=0; d<DEPTH; d++)
         bitMap1.Planes[d] = (PLANEPTR)AllocRaster(WIDTH, HEIGHT);
