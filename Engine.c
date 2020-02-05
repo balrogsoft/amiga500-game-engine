@@ -894,7 +894,7 @@ int main(void)
             }
         }
         
-        // Wait to end of frame to draw game content
+        // Wait top of frame
         WaitTOF();
         
         // Restore sprite and object backgrounds
