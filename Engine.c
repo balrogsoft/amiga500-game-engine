@@ -132,16 +132,17 @@ void HardWaitBlitter(void)
     }
 }
 
+
 Bitmap* bm_create(WORD w, WORD h, WORD d, UBYTE* data)
-{       
+{
 	UBYTE i;
 	Bitmap* bm = (Bitmap*) AllocMem(sizeof(Bitmap), MEMF_CLEAR);
 
 	bm->width  = w;
-	bm->height = h;
+	bm->height = h; 
 	bm->depth  = d;
 
-        bm->wbytes = w >> 3;
+    	bm->wbytes = w >> 3;
     
 	bm->mask = NULL;
 	bm->colortable = (UWORD*) AllocMem(sizeof(UWORD)*(2<<d), MEMF_CLEAR);
@@ -154,17 +155,29 @@ Bitmap* bm_create(WORD w, WORD h, WORD d, UBYTE* data)
             InitBitMap(bm->bitmap, d, w, h);
             
             for (i = 0; i < d; i++) 
-                bm->bitmap->Planes[i] = (PLANEPTR) AllocRaster(w,h);
+                bm->bitmap->Planes[i] = (PLANEPTR) AllocRaster(w, h);
 	    
             bm->rastPort = (struct RastPort*) AllocMem(sizeof(struct RastPort),MEMF_CLEAR);
             InitRastPort(bm->rastPort);
             bm->rastPort->BitMap = bm->bitmap;
             SetRast(bm->rastPort, 0);
             if (data != NULL) {
-                WaitBlit();
-                
-                for (i = 0; i < d; i++) 
-                    CopyMem(data+((w*h*i)>>3), bm->bitmap->Planes[i], (w*h)>>3);
+                WORD bsize = (h << 6) + (w >> 4);
+                WORD rsize = w*h;
+                for (i = 0; i < d; i++) {
+                    HardWaitBlitter();
+
+                    custom->bltcon0 = 0x9F0;
+                    custom->bltcon1 = 0;
+                    custom->bltafwm = 0xFFFF;
+                    custom->bltalwm = 0xFFFF;
+                    custom->bltamod = 0;
+                    custom->bltdmod = 0;
+
+                    custom->bltapt  = data +((rsize*i)>>3);
+                    custom->bltdpt  = bm->bitmap->Planes[i];
+                    custom->bltsize = bsize;
+                }
             }
             return bm;
 	}
