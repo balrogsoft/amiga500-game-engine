@@ -1,9 +1,9 @@
 /**********************************************
  *					      *
- *		 A500GE v 0.1		      *
- *	     Amiga 500 Game Engine            *
+ *		A500GE v 0.1		      *
+ *	    Amiga 500 Game Engine             *
  *	by Pedro Gil Guirado - Balrog Soft    *
- *	       www.amigaskool.net	      *
+ *	      www.amigaskool.net	      *
  *					      *
  **********************************************/
 
@@ -83,7 +83,6 @@ struct timerequest *TimerIO;
 struct MsgPort *TimerMP;
 struct Message *TimerMsg;
 
-
 struct Task *myTask = NULL;
 BYTE oldPri;
 
@@ -100,7 +99,8 @@ typedef struct {
 	UBYTE colors;
 	BOOL rasterOwn;
 	USHORT *colortable;
-        UBYTE wbytes;
+    UBYTE wbytes;
+    UWORD bltsize;
 	struct BitMap *bitmap;
 	struct RastPort *rastPort;
 } Bitmap;
@@ -114,9 +114,8 @@ typedef struct {
 	
 	WORD x;
 	WORD y;
-        WORD width;
-        WORD height;
-    
+    WORD width;
+    WORD height;
 } Sprite;
 
 
@@ -132,7 +131,7 @@ void HardWaitBlitter(void)
     }
 }
 
-
+// Bitmap width is limited to a size of even bytes
 Bitmap* bm_create(WORD w, WORD h, WORD d, UBYTE* data)
 {
 	UBYTE i;
@@ -142,7 +141,7 @@ Bitmap* bm_create(WORD w, WORD h, WORD d, UBYTE* data)
 	bm->height = h; 
 	bm->depth  = d;
 
-    	bm->wbytes = w >> 3;
+    bm->wbytes = w >> 3;
     
 	bm->mask = NULL;
 	bm->colortable = (UWORD*) AllocMem(sizeof(UWORD)*(2<<d), MEMF_CLEAR);
@@ -174,8 +173,8 @@ Bitmap* bm_create(WORD w, WORD h, WORD d, UBYTE* data)
                     custom->bltamod = 0;
                     custom->bltdmod = 0;
 
-                    custom->bltapt  = data +((rsize*i)>>3);
-                    custom->bltdpt  = bm->bitmap->Planes[i];
+                    custom->bltapt	= data +((rsize*i)>>3);
+                    custom->bltdpt	= bm->bitmap->Planes[i];
                     custom->bltsize = bsize;
                 }
             }
@@ -213,6 +212,7 @@ void bm_dealloc(Bitmap* bm) {
     FreeMem(bm, sizeof(Bitmap));
 }
 
+// Draw a block with mask of 16x16 pixels
 void bm_drawBlock(Bitmap* bm, struct RastPort* rp, WORD x, WORD y, WORD tile)
 {
     LONG scr_offset = ( (x >> 3) & 0xFFFE ) + ( y  * BITMAPLINEBYTES );
@@ -235,7 +235,7 @@ void bm_drawBlock(Bitmap* bm, struct RastPort* rp, WORD x, WORD y, WORD tile)
     custom->bltcpt	= rp->BitMap->Planes[0] + scr_offset;
     custom->bltdpt	= rp->BitMap->Planes[0] + scr_offset;
 
-    custom->bltsize = 1025;//16*64+1;
+    custom->bltsize = 1025;
 
     HardWaitBlitter();
 
@@ -244,7 +244,7 @@ void bm_drawBlock(Bitmap* bm, struct RastPort* rp, WORD x, WORD y, WORD tile)
     custom->bltcpt	= rp->BitMap->Planes[1] + scr_offset;
     custom->bltdpt	= rp->BitMap->Planes[1] + scr_offset;
 
-    custom->bltsize = 1025;//16*64+1;
+    custom->bltsize = 1025;
 
     HardWaitBlitter();
 
@@ -253,7 +253,7 @@ void bm_drawBlock(Bitmap* bm, struct RastPort* rp, WORD x, WORD y, WORD tile)
     custom->bltcpt	= rp->BitMap->Planes[2] + scr_offset;
     custom->bltdpt	= rp->BitMap->Planes[2] + scr_offset;
 
-    custom->bltsize = 1025;//16*64+1;
+    custom->bltsize = 1025;
 
     HardWaitBlitter();
 
@@ -262,7 +262,7 @@ void bm_drawBlock(Bitmap* bm, struct RastPort* rp, WORD x, WORD y, WORD tile)
     custom->bltcpt	= rp->BitMap->Planes[3] + scr_offset;
     custom->bltdpt	= rp->BitMap->Planes[3] + scr_offset;
 
-    custom->bltsize = 1025;//16*64+1;
+    custom->bltsize = 1025;
 }
 
 void bm_createMask(Bitmap* bm, UBYTE color) 
@@ -291,6 +291,7 @@ void bm_createMask(Bitmap* bm, UBYTE color)
     }
 }
 
+// Sprite width is limited to a size of even bytes
 Sprite* sp_create(Bitmap* bm, WORD width, WORD height, BOOL mask) 
 {
     Sprite* spr = (Sprite*)AllocMem(sizeof(Sprite), 0L);
@@ -309,6 +310,8 @@ Sprite* sp_create(Bitmap* bm, WORD width, WORD height, BOOL mask)
     
     spr->rest_bm = bm_create(spr->width+16, spr->height<<1, bm->depth, NULL);
 
+    spr->bltsize = (height << 6) + (width >> 4) + 1;
+    
     return spr;
 }
 
@@ -328,36 +331,36 @@ void sp_backupSpriteBack(Sprite* spr, struct RastPort* rp, WORD x, WORD y, UBYTE
     custom->bltafwm = 0xFFFF;
     custom->bltalwm = 0xFFFF;
     custom->bltamod = BITMAPLINEBYTES - 4;
-    custom->bltdmod = 0;;
+    custom->bltdmod = 0;
 
 
     custom->bltapt  = rp->BitMap->Planes[0] + scr_offset;
     custom->bltdpt	= spr->rest_bm->bitmap->Planes[0] + map_offset;
 
-    custom->bltsize = 1026;//16*64+2;
+    custom->bltsize = spr->bltsize;
 
     HardWaitBlitter();
 
     custom->bltapt  = rp->BitMap->Planes[1] + scr_offset;
     custom->bltdpt	= spr->rest_bm->bitmap->Planes[1] + map_offset;
 
-    custom->bltsize = 1026;//16*64+2;
+    custom->bltsize = spr->bltsize;
 
     HardWaitBlitter();
 
     custom->bltapt  = rp->BitMap->Planes[2] + scr_offset;
     custom->bltdpt	= spr->rest_bm->bitmap->Planes[2] + map_offset;
 
-    custom->bltsize = 1026;//16*64+2;
+    custom->bltsize = spr->bltsize;
 
     HardWaitBlitter();
 
     custom->bltapt  = rp->BitMap->Planes[3] + scr_offset;
     custom->bltdpt	= spr->rest_bm->bitmap->Planes[3] + map_offset;
 
-    custom->bltsize = 1026;//16*64+2;
-    
+    custom->bltsize = spr->bltsize;
 }
+
 void sp_restoreSpriteBack(Sprite* spr, struct RastPort* rp,  WORD x, WORD y, UBYTE frame)  {
     ULONG scr_offset, map_offset;
     
@@ -378,7 +381,7 @@ void sp_restoreSpriteBack(Sprite* spr, struct RastPort* rp,  WORD x, WORD y, UBY
     custom->bltapt	= spr->rest_bm->bitmap->Planes[0] + map_offset;
     custom->bltdpt	=  rp->BitMap->Planes[0] + scr_offset;
 
-    custom->bltsize = 1026;//16*64+2;
+    custom->bltsize = spr->bltsize;
 
     HardWaitBlitter();
 
@@ -386,14 +389,14 @@ void sp_restoreSpriteBack(Sprite* spr, struct RastPort* rp,  WORD x, WORD y, UBY
     custom->bltdpt	=  rp->BitMap->Planes[1] + scr_offset;
 
     
-    custom->bltsize = 1026;//16*64+2;
+    custom->bltsize = spr->bltsize;
 
     HardWaitBlitter();
 
     custom->bltapt	= spr->rest_bm->bitmap->Planes[2] + map_offset;
     custom->bltdpt	=  rp->BitMap->Planes[2] + scr_offset;
 
-    custom->bltsize = 1026;//16*64+2;
+    custom->bltsize = spr->bltsize;
 
     HardWaitBlitter();
 
@@ -401,7 +404,7 @@ void sp_restoreSpriteBack(Sprite* spr, struct RastPort* rp,  WORD x, WORD y, UBY
     custom->bltdpt	=  rp->BitMap->Planes[3] + scr_offset;
 
 
-    custom->bltsize = 1026;//16*64+2;
+    custom->bltsize = spr->bltsize;
 }
 
 void sp_drawSprite(Sprite* spr, struct RastPort* rp, WORD sx, WORD sy, UBYTE frame) 
@@ -426,7 +429,7 @@ void sp_drawSprite(Sprite* spr, struct RastPort* rp, WORD sx, WORD sy, UBYTE fra
     custom->bltcpt	= rp->BitMap->Planes[0] + scr_offset;
     custom->bltdpt	= rp->BitMap->Planes[0] + scr_offset;
 
-    custom->bltsize = 1026;//16*64+2;
+    custom->bltsize = spr->bltsize;
 
     HardWaitBlitter();
 
@@ -435,7 +438,7 @@ void sp_drawSprite(Sprite* spr, struct RastPort* rp, WORD sx, WORD sy, UBYTE fra
     custom->bltcpt	= rp->BitMap->Planes[1] + scr_offset;
     custom->bltdpt	= rp->BitMap->Planes[1] + scr_offset;
 
-    custom->bltsize = 1026;//16*64+2;
+    custom->bltsize = spr->bltsize;
 
     HardWaitBlitter();
 
@@ -444,7 +447,7 @@ void sp_drawSprite(Sprite* spr, struct RastPort* rp, WORD sx, WORD sy, UBYTE fra
     custom->bltcpt	= rp->BitMap->Planes[2] + scr_offset;
     custom->bltdpt	= rp->BitMap->Planes[2] + scr_offset;
 
-    custom->bltsize = 1026;//16*64+2;
+    custom->bltsize = spr->bltsize;
 
     HardWaitBlitter();
 
@@ -453,7 +456,7 @@ void sp_drawSprite(Sprite* spr, struct RastPort* rp, WORD sx, WORD sy, UBYTE fra
     custom->bltcpt	= rp->BitMap->Planes[3] + scr_offset;
     custom->bltdpt	= rp->BitMap->Planes[3] + scr_offset;
 
-    custom->bltsize = 1026;//16*64+2;
+    custom->bltsize = spr->bltsize;
 }
 
  
@@ -722,15 +725,15 @@ int main(void)
         WORD i = 0;         
         for (y = 0; y < HEIGHT-1; y += TILE) 
         {
-                for (x = 0; x < WIDTH-1; x+= TILE) 
-                {
-                    UBYTE tile = map[i];
-                    bm_drawBlock(tiles_bm, rastPort, x, y, 33);
-                    if (tile>0)
-                        bm_drawBlock(tiles_bm, rastPort, x, y, tile);
+            for (x = 0; x < WIDTH-1; x+= TILE) 
+            {
+                UBYTE tile = map[i];
+                bm_drawBlock(tiles_bm, rastPort, x, y, 33);
+                if (tile>0)
+                    bm_drawBlock(tiles_bm, rastPort, x, y, tile);
 
-                    i++;  
-                }
+                i++;  
+            }
         }
         sp_backupSpriteBack(obj_spr, rastPort, ox, oy, j);
         sp_backupSpriteBack(player_spr, rastPort, px, py, j);
@@ -906,7 +909,7 @@ int main(void)
             }
         }
         
-        // Wait top of frame
+        // Wait to end of frame to draw game content
         WaitTOF();
         
         // Restore sprite and object backgrounds
