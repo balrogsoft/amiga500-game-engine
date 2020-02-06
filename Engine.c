@@ -2,6 +2,7 @@
  *					      *
  *		A500GE v 0.1		      *
  *	    Amiga 500 Game Engine             *
+ *	     Copyright 2011-2018 	      *
  *	by Pedro Gil Guirado - Balrog Soft    *
  *	      www.amigaskool.net	      *
  *					      *
@@ -131,7 +132,7 @@ void HardWaitBlitter(void)
     }
 }
 
-// Bitmap width is limited to a size of even bytes
+// Bitmap width must be word aligned
 Bitmap* bm_create(WORD w, WORD h, WORD d, UBYTE* data)
 {
 	UBYTE i;
@@ -291,7 +292,7 @@ void bm_createMask(Bitmap* bm, UBYTE color)
     }
 }
 
-// Sprite width is limited to a size of even bytes
+// Sprite width must be word aligned
 Sprite* sp_create(Bitmap* bm, WORD width, WORD height, BOOL mask) 
 {
     Sprite* spr = (Sprite*)AllocMem(sizeof(Sprite), 0L);
