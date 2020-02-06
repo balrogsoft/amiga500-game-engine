@@ -1,10 +1,9 @@
 /**********************************************
  *					      *
- *		A500GE v 0.1		      *
- *	    Amiga 500 Game Engine             *
- *	     Copyright 2011-2018 	      *
+ *		 A500GE v 0.1		      *
+ *	     Amiga 500 Game Engine            *
  *	by Pedro Gil Guirado - Balrog Soft    *
- *	      www.amigaskool.net	      *
+ *	       www.amigaskool.net	      *
  *					      *
  **********************************************/
 
