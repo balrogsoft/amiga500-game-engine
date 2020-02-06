@@ -2,7 +2,6 @@
  *					      *
  *		A500GE v 0.1		      *
  *	    Amiga 500 Game Engine             *
- *	     Copyright 2011-2018 	      *
  *	by Pedro Gil Guirado - Balrog Soft    *
  *	      www.amigaskool.net	      *
  *					      *
@@ -100,8 +99,8 @@ typedef struct {
 	UBYTE colors;
 	BOOL rasterOwn;
 	USHORT *colortable;
-    UBYTE wbytes;
-    UWORD bltsize;
+    	UBYTE wbytes;
+    	UWORD bltsize;
 	struct BitMap *bitmap;
 	struct RastPort *rastPort;
 } Bitmap;
@@ -115,8 +114,8 @@ typedef struct {
 	
 	WORD x;
 	WORD y;
-    WORD width;
-    WORD height;
+    	WORD width;
+    	WORD height;
 } Sprite;
 
 
@@ -142,7 +141,7 @@ Bitmap* bm_create(WORD w, WORD h, WORD d, UBYTE* data)
 	bm->height = h; 
 	bm->depth  = d;
 
-    bm->wbytes = w >> 3;
+    	bm->wbytes = w >> 3;
     
 	bm->mask = NULL;
 	bm->colortable = (UWORD*) AllocMem(sizeof(UWORD)*(2<<d), MEMF_CLEAR);
@@ -233,8 +232,8 @@ void bm_drawBlock(Bitmap* bm, struct RastPort* rp, WORD x, WORD y, WORD tile)
 
     custom->bltapt  = bm->mask + map_offset;
     custom->bltbpt  = bm->bitmap->Planes[0] + map_offset;
-    custom->bltcpt	= rp->BitMap->Planes[0] + scr_offset;
-    custom->bltdpt	= rp->BitMap->Planes[0] + scr_offset;
+    custom->bltcpt  = rp->BitMap->Planes[0] + scr_offset;
+    custom->bltdpt  = rp->BitMap->Planes[0] + scr_offset;
 
     custom->bltsize = 1025;
 
@@ -242,8 +241,8 @@ void bm_drawBlock(Bitmap* bm, struct RastPort* rp, WORD x, WORD y, WORD tile)
 
     custom->bltapt  = bm->mask + map_offset;
     custom->bltbpt  = bm->bitmap->Planes[1] + map_offset;
-    custom->bltcpt	= rp->BitMap->Planes[1] + scr_offset;
-    custom->bltdpt	= rp->BitMap->Planes[1] + scr_offset;
+    custom->bltcpt  = rp->BitMap->Planes[1] + scr_offset;
+    custom->bltdpt  = rp->BitMap->Planes[1] + scr_offset;
 
     custom->bltsize = 1025;
 
@@ -251,8 +250,8 @@ void bm_drawBlock(Bitmap* bm, struct RastPort* rp, WORD x, WORD y, WORD tile)
 
     custom->bltapt  = bm->mask + map_offset;
     custom->bltbpt  = bm->bitmap->Planes[2] + map_offset;
-    custom->bltcpt	= rp->BitMap->Planes[2] + scr_offset;
-    custom->bltdpt	= rp->BitMap->Planes[2] + scr_offset;
+    custom->bltcpt  = rp->BitMap->Planes[2] + scr_offset;
+    custom->bltdpt  = rp->BitMap->Planes[2] + scr_offset;
 
     custom->bltsize = 1025;
 
@@ -260,8 +259,8 @@ void bm_drawBlock(Bitmap* bm, struct RastPort* rp, WORD x, WORD y, WORD tile)
 
     custom->bltapt  = bm->mask + map_offset;
     custom->bltbpt  = bm->bitmap->Planes[3] + map_offset;
-    custom->bltcpt	= rp->BitMap->Planes[3] + scr_offset;
-    custom->bltdpt	= rp->BitMap->Planes[3] + scr_offset;
+    custom->bltcpt  = rp->BitMap->Planes[3] + scr_offset;
+    custom->bltdpt  = rp->BitMap->Planes[3] + scr_offset;
 
     custom->bltsize = 1025;
 }
@@ -336,28 +335,28 @@ void sp_backupSpriteBack(Sprite* spr, struct RastPort* rp, WORD x, WORD y, UBYTE
 
 
     custom->bltapt  = rp->BitMap->Planes[0] + scr_offset;
-    custom->bltdpt	= spr->rest_bm->bitmap->Planes[0] + map_offset;
+    custom->bltdpt  = spr->rest_bm->bitmap->Planes[0] + map_offset;
 
     custom->bltsize = spr->bltsize;
 
     HardWaitBlitter();
 
     custom->bltapt  = rp->BitMap->Planes[1] + scr_offset;
-    custom->bltdpt	= spr->rest_bm->bitmap->Planes[1] + map_offset;
+    custom->bltdpt  = spr->rest_bm->bitmap->Planes[1] + map_offset;
 
     custom->bltsize = spr->bltsize;
 
     HardWaitBlitter();
 
     custom->bltapt  = rp->BitMap->Planes[2] + scr_offset;
-    custom->bltdpt	= spr->rest_bm->bitmap->Planes[2] + map_offset;
+    custom->bltdpt  = spr->rest_bm->bitmap->Planes[2] + map_offset;
 
     custom->bltsize = spr->bltsize;
 
     HardWaitBlitter();
 
     custom->bltapt  = rp->BitMap->Planes[3] + scr_offset;
-    custom->bltdpt	= spr->rest_bm->bitmap->Planes[3] + map_offset;
+    custom->bltdpt  = spr->rest_bm->bitmap->Planes[3] + map_offset;
 
     custom->bltsize = spr->bltsize;
 }
@@ -427,8 +426,8 @@ void sp_drawSprite(Sprite* spr, struct RastPort* rp, WORD sx, WORD sy, UBYTE fra
 
     custom->bltapt  = spr->bm->mask + map_offset;
     custom->bltbpt  = spr->bm->bitmap->Planes[0] + map_offset;
-    custom->bltcpt	= rp->BitMap->Planes[0] + scr_offset;
-    custom->bltdpt	= rp->BitMap->Planes[0] + scr_offset;
+    custom->bltcpt  = rp->BitMap->Planes[0] + scr_offset;
+    custom->bltdpt  = rp->BitMap->Planes[0] + scr_offset;
 
     custom->bltsize = spr->bltsize;
 
@@ -436,8 +435,8 @@ void sp_drawSprite(Sprite* spr, struct RastPort* rp, WORD sx, WORD sy, UBYTE fra
 
     custom->bltapt  = spr->bm->mask + map_offset;
     custom->bltbpt  = spr->bm->bitmap->Planes[1] + map_offset;
-    custom->bltcpt	= rp->BitMap->Planes[1] + scr_offset;
-    custom->bltdpt	= rp->BitMap->Planes[1] + scr_offset;
+    custom->bltcpt  = rp->BitMap->Planes[1] + scr_offset;
+    custom->bltdpt  = rp->BitMap->Planes[1] + scr_offset;
 
     custom->bltsize = spr->bltsize;
 
@@ -445,8 +444,8 @@ void sp_drawSprite(Sprite* spr, struct RastPort* rp, WORD sx, WORD sy, UBYTE fra
 
     custom->bltapt  = spr->bm->mask + map_offset;
     custom->bltbpt  = spr->bm->bitmap->Planes[2] + map_offset;
-    custom->bltcpt	= rp->BitMap->Planes[2] + scr_offset;
-    custom->bltdpt	= rp->BitMap->Planes[2] + scr_offset;
+    custom->bltcpt  = rp->BitMap->Planes[2] + scr_offset;
+    custom->bltdpt  = rp->BitMap->Planes[2] + scr_offset;
 
     custom->bltsize = spr->bltsize;
 
@@ -454,8 +453,8 @@ void sp_drawSprite(Sprite* spr, struct RastPort* rp, WORD sx, WORD sy, UBYTE fra
 
     custom->bltapt  = spr->bm->mask + map_offset;
     custom->bltbpt  = spr->bm->bitmap->Planes[3] + map_offset;
-    custom->bltcpt	= rp->BitMap->Planes[3] + scr_offset;
-    custom->bltdpt	= rp->BitMap->Planes[3] + scr_offset;
+    custom->bltcpt  = rp->BitMap->Planes[3] + scr_offset;
+    custom->bltdpt  = rp->BitMap->Planes[3] + scr_offset;
 
     custom->bltsize = spr->bltsize;
 }
