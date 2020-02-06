@@ -88,6 +88,8 @@ BYTE oldPri;
 
 UBYTE NameString[]="InputGameHandler";
 
+UWORD wbytes[HEIGHT];
+
 static struct Window *old_processwinptr;
 static struct Process *thisprocess;
 
@@ -112,12 +114,14 @@ typedef struct {
 	WORD px[2];
 	WORD py[2];
 	
+    	UWORD wbytes[HEIGHT];
+    	UWORD bltsize;
+    
 	WORD x;
 	WORD y;
     	WORD width;
     	WORD height;
 } Sprite;
-
 
 static LONG __interrupt __saveds NullInputHandler(void)
 {
@@ -232,8 +236,8 @@ void bm_drawBlock(Bitmap* bm, struct RastPort* rp, WORD x, WORD y, WORD tile)
 
     custom->bltapt  = bm->mask + map_offset;
     custom->bltbpt  = bm->bitmap->Planes[0] + map_offset;
-    custom->bltcpt  = rp->BitMap->Planes[0] + scr_offset;
-    custom->bltdpt  = rp->BitMap->Planes[0] + scr_offset;
+    custom->bltcpt	= rp->BitMap->Planes[0] + scr_offset;
+    custom->bltdpt	= rp->BitMap->Planes[0] + scr_offset;
 
     custom->bltsize = 1025;
 
@@ -241,8 +245,8 @@ void bm_drawBlock(Bitmap* bm, struct RastPort* rp, WORD x, WORD y, WORD tile)
 
     custom->bltapt  = bm->mask + map_offset;
     custom->bltbpt  = bm->bitmap->Planes[1] + map_offset;
-    custom->bltcpt  = rp->BitMap->Planes[1] + scr_offset;
-    custom->bltdpt  = rp->BitMap->Planes[1] + scr_offset;
+    custom->bltcpt	= rp->BitMap->Planes[1] + scr_offset;
+    custom->bltdpt	= rp->BitMap->Planes[1] + scr_offset;
 
     custom->bltsize = 1025;
 
@@ -250,8 +254,8 @@ void bm_drawBlock(Bitmap* bm, struct RastPort* rp, WORD x, WORD y, WORD tile)
 
     custom->bltapt  = bm->mask + map_offset;
     custom->bltbpt  = bm->bitmap->Planes[2] + map_offset;
-    custom->bltcpt  = rp->BitMap->Planes[2] + scr_offset;
-    custom->bltdpt  = rp->BitMap->Planes[2] + scr_offset;
+    custom->bltcpt	= rp->BitMap->Planes[2] + scr_offset;
+    custom->bltdpt	= rp->BitMap->Planes[2] + scr_offset;
 
     custom->bltsize = 1025;
 
@@ -259,8 +263,8 @@ void bm_drawBlock(Bitmap* bm, struct RastPort* rp, WORD x, WORD y, WORD tile)
 
     custom->bltapt  = bm->mask + map_offset;
     custom->bltbpt  = bm->bitmap->Planes[3] + map_offset;
-    custom->bltcpt  = rp->BitMap->Planes[3] + scr_offset;
-    custom->bltdpt  = rp->BitMap->Planes[3] + scr_offset;
+    custom->bltcpt	= rp->BitMap->Planes[3] + scr_offset;
+    custom->bltdpt	= rp->BitMap->Planes[3] + scr_offset;
 
     custom->bltsize = 1025;
 }
@@ -294,6 +298,7 @@ void bm_createMask(Bitmap* bm, UBYTE color)
 // Sprite width must be word aligned
 Sprite* sp_create(Bitmap* bm, WORD width, WORD height, BOOL mask) 
 {
+    UBYTE y;
     Sprite* spr = (Sprite*)AllocMem(sizeof(Sprite), 0L);
 	
     spr->bm = bm;
@@ -312,6 +317,9 @@ Sprite* sp_create(Bitmap* bm, WORD width, WORD height, BOOL mask)
 
     spr->bltsize = (height << 6) + (width >> 4) + 1;
     
+    for (y = 0; y < spr->bm->height; y ++) 
+        spr->wbytes[y] = y * spr->bm->wbytes;
+    
     return spr;
 }
 
@@ -321,7 +329,7 @@ void sp_backupSpriteBack(Sprite* spr, struct RastPort* rp, WORD x, WORD y, UBYTE
     spr->px[frame] = x; 
     spr->py[frame] = y;
      
-    scr_offset = ( (spr->px[frame] >> 3) & 0xFFFE ) + ( spr->py[frame] * BITMAPLINEBYTES );
+    scr_offset = ( (spr->px[frame] >> 3) & 0xFFFE ) + ( wbytes[spr->py[frame]] );
     map_offset = ( (frame * spr->height) << 2);
     
     HardWaitBlitter();
@@ -335,36 +343,36 @@ void sp_backupSpriteBack(Sprite* spr, struct RastPort* rp, WORD x, WORD y, UBYTE
 
 
     custom->bltapt  = rp->BitMap->Planes[0] + scr_offset;
-    custom->bltdpt  = spr->rest_bm->bitmap->Planes[0] + map_offset;
+    custom->bltdpt	= spr->rest_bm->bitmap->Planes[0] + map_offset;
 
     custom->bltsize = spr->bltsize;
 
     HardWaitBlitter();
 
     custom->bltapt  = rp->BitMap->Planes[1] + scr_offset;
-    custom->bltdpt  = spr->rest_bm->bitmap->Planes[1] + map_offset;
+    custom->bltdpt	= spr->rest_bm->bitmap->Planes[1] + map_offset;
 
     custom->bltsize = spr->bltsize;
 
     HardWaitBlitter();
 
     custom->bltapt  = rp->BitMap->Planes[2] + scr_offset;
-    custom->bltdpt  = spr->rest_bm->bitmap->Planes[2] + map_offset;
+    custom->bltdpt	= spr->rest_bm->bitmap->Planes[2] + map_offset;
 
     custom->bltsize = spr->bltsize;
 
     HardWaitBlitter();
 
     custom->bltapt  = rp->BitMap->Planes[3] + scr_offset;
-    custom->bltdpt  = spr->rest_bm->bitmap->Planes[3] + map_offset;
+    custom->bltdpt	= spr->rest_bm->bitmap->Planes[3] + map_offset;
 
     custom->bltsize = spr->bltsize;
 }
 
-void sp_restoreSpriteBack(Sprite* spr, struct RastPort* rp,  WORD x, WORD y, UBYTE frame)  {
+void sp_restoreSpriteBack(Sprite* spr, struct RastPort* rp, WORD x, WORD y, UBYTE frame) {
     ULONG scr_offset, map_offset;
     
-    scr_offset = ( (spr->px[frame] >> 3) & 0xFFFE ) + ( spr->py[frame] * BITMAPLINEBYTES );
+    scr_offset = ( (spr->px[frame] >> 3) & 0xFFFE ) + ( wbytes[spr->py[frame]] );
     map_offset = ( (frame * spr->height) << 2);
     
     HardWaitBlitter();
@@ -379,14 +387,14 @@ void sp_restoreSpriteBack(Sprite* spr, struct RastPort* rp,  WORD x, WORD y, UBY
 
 
     custom->bltapt	= spr->rest_bm->bitmap->Planes[0] + map_offset;
-    custom->bltdpt	=  rp->BitMap->Planes[0] + scr_offset;
+    custom->bltdpt	= rp->BitMap->Planes[0] + scr_offset;
 
     custom->bltsize = spr->bltsize;
 
     HardWaitBlitter();
 
     custom->bltapt	= spr->rest_bm->bitmap->Planes[1] + map_offset;
-    custom->bltdpt	=  rp->BitMap->Planes[1] + scr_offset;
+    custom->bltdpt	= rp->BitMap->Planes[1] + scr_offset;
 
     
     custom->bltsize = spr->bltsize;
@@ -394,14 +402,14 @@ void sp_restoreSpriteBack(Sprite* spr, struct RastPort* rp,  WORD x, WORD y, UBY
     HardWaitBlitter();
 
     custom->bltapt	= spr->rest_bm->bitmap->Planes[2] + map_offset;
-    custom->bltdpt	=  rp->BitMap->Planes[2] + scr_offset;
+    custom->bltdpt	= rp->BitMap->Planes[2] + scr_offset;
 
     custom->bltsize = spr->bltsize;
 
     HardWaitBlitter();
 
     custom->bltapt	= spr->rest_bm->bitmap->Planes[3] + map_offset;
-    custom->bltdpt	=  rp->BitMap->Planes[3] + scr_offset;
+    custom->bltdpt	= rp->BitMap->Planes[3] + scr_offset;
 
 
     custom->bltsize = spr->bltsize;
@@ -409,8 +417,8 @@ void sp_restoreSpriteBack(Sprite* spr, struct RastPort* rp,  WORD x, WORD y, UBY
 
 void sp_drawSprite(Sprite* spr, struct RastPort* rp, WORD sx, WORD sy, UBYTE frame) 
 {
-    ULONG scr_offset = ( (spr->px[frame] >> 3) & 0xFFFE ) + ( spr->py[frame] * BITMAPLINEBYTES );
-    ULONG map_offset = ( (sx >> 3) & 0xFFFE ) + ( sy * spr->bm->wbytes );
+    ULONG scr_offset = ( (spr->px[frame] >> 3) & 0xFFFE ) + ( wbytes[spr->py[frame]] );
+    ULONG map_offset = ( (sx >> 3) & 0xFFFE ) + ( spr->wbytes[sy] );
     
     HardWaitBlitter();
 
@@ -426,8 +434,8 @@ void sp_drawSprite(Sprite* spr, struct RastPort* rp, WORD sx, WORD sy, UBYTE fra
 
     custom->bltapt  = spr->bm->mask + map_offset;
     custom->bltbpt  = spr->bm->bitmap->Planes[0] + map_offset;
-    custom->bltcpt  = rp->BitMap->Planes[0] + scr_offset;
-    custom->bltdpt  = rp->BitMap->Planes[0] + scr_offset;
+    custom->bltcpt	= rp->BitMap->Planes[0] + scr_offset;
+    custom->bltdpt	= rp->BitMap->Planes[0] + scr_offset;
 
     custom->bltsize = spr->bltsize;
 
@@ -435,8 +443,8 @@ void sp_drawSprite(Sprite* spr, struct RastPort* rp, WORD sx, WORD sy, UBYTE fra
 
     custom->bltapt  = spr->bm->mask + map_offset;
     custom->bltbpt  = spr->bm->bitmap->Planes[1] + map_offset;
-    custom->bltcpt  = rp->BitMap->Planes[1] + scr_offset;
-    custom->bltdpt  = rp->BitMap->Planes[1] + scr_offset;
+    custom->bltcpt	= rp->BitMap->Planes[1] + scr_offset;
+    custom->bltdpt	= rp->BitMap->Planes[1] + scr_offset;
 
     custom->bltsize = spr->bltsize;
 
@@ -444,8 +452,8 @@ void sp_drawSprite(Sprite* spr, struct RastPort* rp, WORD sx, WORD sy, UBYTE fra
 
     custom->bltapt  = spr->bm->mask + map_offset;
     custom->bltbpt  = spr->bm->bitmap->Planes[2] + map_offset;
-    custom->bltcpt  = rp->BitMap->Planes[2] + scr_offset;
-    custom->bltdpt  = rp->BitMap->Planes[2] + scr_offset;
+    custom->bltcpt	= rp->BitMap->Planes[2] + scr_offset;
+    custom->bltdpt	= rp->BitMap->Planes[2] + scr_offset;
 
     custom->bltsize = spr->bltsize;
 
@@ -453,8 +461,8 @@ void sp_drawSprite(Sprite* spr, struct RastPort* rp, WORD sx, WORD sy, UBYTE fra
 
     custom->bltapt  = spr->bm->mask + map_offset;
     custom->bltbpt  = spr->bm->bitmap->Planes[3] + map_offset;
-    custom->bltcpt  = rp->BitMap->Planes[3] + scr_offset;
-    custom->bltdpt  = rp->BitMap->Planes[3] + scr_offset;
+    custom->bltcpt	= rp->BitMap->Planes[3] + scr_offset;
+    custom->bltdpt	= rp->BitMap->Planes[3] + scr_offset;
 
     custom->bltsize = spr->bltsize;
 }
@@ -575,7 +583,9 @@ int main(void)
     BOOL move = FALSE;
     
     UWORD oldDMA;
-    
+    for (d = 0; d < HEIGHT; d++) {
+        wbytes[d] = d*BITMAPLINEBYTES;
+    }
     // Open libraries need for the game engine
     
     IntuitionBase = (struct IntuitionBase *) OpenLibrary("intuition.library", 0L);
